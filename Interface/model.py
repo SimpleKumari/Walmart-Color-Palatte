@@ -46,9 +46,15 @@ def detect_colors(image, num_colors=20, detect_lip_color=False):
         abs(color[0] - color[1]) < 15 and abs(color[0] - color[2]) < 15 and abs(color[1] - color[2]) < 15)]
 
     if detect_lip_color:
-        # Define a more dynamic approach to find lip region or use predefined ROI
-        lip_roi_start_x, lip_roi_start_y, lip_roi_end_x, lip_roi_end_y = 100, 150, 300, 250
+        face_height, face_width, _ = image.shape
+
+        # Define ROI for lips relative to the face size
+        lip_roi_start_x = int(face_width * 0.35)
+        lip_roi_end_x = int(face_width * 0.65)
+        lip_roi_start_y = int(face_height * 0.6)
+        lip_roi_end_y = int(face_height * 0.8)
         
+        # Ensure the ROI is within the image bounds
         if (lip_roi_start_x < image.shape[1] and lip_roi_start_y < image.shape[0] and
             lip_roi_end_x <= image.shape[1] and lip_roi_end_y <= image.shape[0]):
             lip_roi = image[lip_roi_start_y:lip_roi_end_y, lip_roi_start_x:lip_roi_end_x]
@@ -68,6 +74,7 @@ def detect_colors(image, num_colors=20, detect_lip_color=False):
         filtered_colors.extend(map(tuple, additional_colors))
 
     return filtered_colors[:num_colors]
+
 
 def rgb_to_hsl(r, g, b):
     h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
@@ -192,27 +199,11 @@ def open_url(url):
 
 def main():
     # Streamlit UI
-    st.title('ReStyle')
+    st.title('Color For You: Walmart')
 
     uploaded_file = st.file_uploader("Upload an image of yourself", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
-        # Display the uploaded image (optional)
-        # st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
-
-        # Step 2: Display a video with autoplay
-        video_file = "./animation.mp4"  # Replace with the path to your video file
-
-        # Check if the file exists
-        try:
-            with open(video_file, "rb") as video:
-                st.video(video.read())
-            
-            # Simulate the video playing duration (example: 7 seconds)
-        except FileNotFoundError:
-            st.warning("Video file not found.")
-            time.sleep(7)
-
         # Read the uploaded image
         file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
         image = cv2.imdecode(file_bytes, 1)
@@ -277,6 +268,10 @@ def main():
             )
 
             # Display color palette
+            st.write(f"Predicted Season: {season}")
+            st.write(f"Temperature: {temperature}")
+            st.write(f"Depth: {depth}")
+            st.write(f"Chroma: {chroma}")
             st.subheader("Recommended Color Palette")
             if recommended_colors_palette:
                 color_palette_image = np.zeros((100, len(recommended_colors_palette) * 100, 3), dtype=np.uint8)
